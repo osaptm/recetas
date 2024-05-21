@@ -3,6 +3,10 @@ const router = express.Router();
 const { ObjectId } = require('mongoose').Types;
 const { Ingrediente, Receta, Unidad , Detalle} = require('./models');
 
+router.get('/', async (req, res) => {
+  res.render('inicio', {});
+});
+
 /**************************************************/
 /**************************************************/
 router.get('/unidades', async (req, res) => {
