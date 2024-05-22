@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 var bodyParser = require('body-parser')
 const express = require('express');
 const routes = require('./router');
-mongoose.connect('mongodb+srv://osaptm:123@cluster0.tbbosy8.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {})
+mongoose.connect(process.env.MONGO, {})
 .then(() => console.log('Conexión a MongoDB exitosa'))
 .catch(err => console.error('Error al conectar a MongoDB', err));
 
