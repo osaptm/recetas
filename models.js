@@ -8,6 +8,7 @@ const UnidadSchema = new Schema({
 const IngredienteSchema = new Schema({
   nombre: String,
   costo: Number,
+  presentacion: Number,
   unidad: Schema.Types.ObjectId
 });
 

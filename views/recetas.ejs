@@ -16,12 +16,9 @@
     <% recetas.forEach(function(receta) { %>
       <div class="card">
         <div class="card-body">
-          <h5 class="card-title"><%= receta.nombre %></h5>
-          <p class="card-text">Cantidad de platos: <%= receta.cantidad_platos %></p>
-          <h6>Ingredientes:</h6>
-          <button type="button" class="btn btn-primary" onclick="abrirModalIngrediente('<%= receta._id %>')">
-           Nuevo Ingrediente
-           </button>
+          <h5 class="card-title"><%= receta.nombre %> / Cantidad de platos: <%= receta.cantidad_platos %></h5>
+          <h6>INGREDIENTES: <button type="button" class="btn btn-primary btn-sm" onclick="abrirModalIngrediente('<%= receta._id %>')">Nuevo Ingrediente</button></h6>
+          
           <ul id="listIngredientes_<%= receta._id %>">
             <% receta.array_ingredientes.sort((a, b) => a?.datos_ingrediente[0].nombre.localeCompare(b?.datos_ingrediente[0].nombre)).forEach(function(ingrediente) { 
                 let dataIngrediente = ingrediente?.datos_ingrediente[0]

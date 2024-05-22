@@ -110,22 +110,81 @@ router.get('/ingredientes', async (req, res) => {
 });
 
 router.post('/ingredientes', async (req, res) => {
-  const { nombre, unidadMedida, costo } = req.body;
-  const nuevoIngrediente = new Ingrediente({ nombre,  unidad:unidadMedida, costo });
+  const { nombre, unidadMedida, costo, presentacion } = req.body;
+  const nuevoIngrediente = new Ingrediente({ nombre,  unidad:unidadMedida, costo, presentacion });
   await nuevoIngrediente.save();
+
+  const ingredientes = await Ingrediente.aggregate([
+    {
+      $lookup:{
+        from: "unidads",
+        localField: "unidad",
+        foreignField: "_id",
+        as: "unidad"
+      }
+    }
+  ]);
+  const unidades = await Unidad.find({});
+  res.render('ingredientes', { ingredientes, unidades});
 });
 
 
 router.put('/ingrediente_editar', async (req, res) => {
-  const { idUnidad,nombre,costo,idIngrediente} = req.body;
+  const { idUnidad,nombre,costo,idIngrediente, presentacion} = req.body;
   try {
-    const resultado = await Ingrediente.findByIdAndUpdate(idIngrediente, { nombre, costo, unidad: idUnidad}, { new: true });
+    const resultado = await Ingrediente.findByIdAndUpdate(idIngrediente, { nombre, presentacion, costo, unidad: idUnidad}, { new: true });
     res.send({mensaje:"OK", resultado});
   } catch (error) {
     console.log(error)
     res.send({mensaje:"ERROR"});
   }
 
+});
+/**************************************************/
+/**************************************************/
+router.get('/menu', async (req, res) => {
+  const recetas = await Receta.find({})
+  res.render('menu', { recetas});
+});
+
+router.post('/menu_agregar_receta', async (req, res) => {
+  let {idReceta} = req.body
+  console.log(idReceta)
+  const receta = await Receta.aggregate([
+    {
+      $match:{
+        _id: new ObjectId(idReceta)
+      }
+    },
+    {
+      $lookup:{
+        from: "detalles",
+        localField: "_id",
+        foreignField: "receta",
+        as: "array_ingredientes",
+        pipeline:[
+          {
+            $lookup:{
+              from: "ingredientes",
+              localField: "ingrediente",
+              foreignField: "_id",
+              as: "datos_ingrediente",
+              pipeline:[
+                {$lookup:{
+                  from: "unidads",
+                  localField: "unidad",
+                  foreignField: "_id",
+                  as: "datos_unidad"
+                }}
+              ]
+            }
+          }
+        ]
+      },           
+    }
+  ]);
+  console.log(receta)
+  res.send({ mensaje:"OK", receta});
 });
 /**************************************************/
 /**************************************************/

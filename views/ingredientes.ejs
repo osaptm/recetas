@@ -13,17 +13,18 @@
       Nuevo Ingrediente
     </button> 
     <% ingredientes.forEach(function(ingrediente) { %>
-      <div class="card">
-        <div class="card-body" id="card<%= ingrediente._id %>">
-          <input type="hidden" id="nombre_<%= ingrediente._id %>" value="<%= ingrediente.nombre %>"/>
-          <input type="hidden" id="idunidad_<%= ingrediente._id %>" value="<%= ingrediente.unidad[0]._id %>"/>
-          <input type="hidden" id="costo_<%= ingrediente._id %>" value="<%= ingrediente.costo %>"/>
-          <button onclick="editar_ingrediente('<%= ingrediente._id %>')"type="button" class="btn btn-secondary btn-sm">Editar</button>
-          <h5 class="card-title" id="nombreVisible_<%= ingrediente._id %>"><%= ingrediente.nombre %></h5>
-          <p class="card-text" id="unidadVisible_<%= ingrediente._id %>">Unidad de medida: <%= ingrediente.unidad[0].nombre %></p>
-          <p class="card-text" id="costoVisible_<%= ingrediente._id %>">Costo: <%= ingrediente.costo %></p>
+        <input type="hidden" id="nombre_<%= ingrediente._id %>" value="<%= ingrediente.nombre %>"/>
+        <input type="hidden" id="idunidad_<%= ingrediente._id %>" value="<%= ingrediente.unidad[0]._id %>"/>
+        <input type="hidden" id="costo_<%= ingrediente._id %>" value="<%= ingrediente.costo %>"/>
+        <input type="hidden" id="presentacion_<%= ingrediente._id %>" value="<%= ingrediente.presentacion %>"/>
+        
+        <div style="display:flex; align-items: center; align-content: center; gap: 5px; margin-top: 10px; border:solid 1px black ; padding: 10px;" id="card<%= ingrediente._id %>">        
+          <button onclick="editar_ingrediente('<%= ingrediente._id %>')" type="button" class="btn btn-secondary btn-sm">Editar</button>
+          <div id="nombreVisible_<%= ingrediente._id %>"><%= ingrediente.nombre %></div>
+          <div id="unidadVisible_<%= ingrediente._id %>">Unidad de medida: <%= ingrediente.unidad[0].nombre %></div>
+          <div id="presentacionVisible_<%= ingrediente._id %>">Presentacion: <%= ingrediente.presentacion %></div>
+          <div id="costoVisible_<%= ingrediente._id %>">Costo: <%= ingrediente.costo %></div>
         </div>
-      </div>
     <% }); %>
       
   </div>
@@ -52,6 +53,10 @@
               <div id="area_select"></div>  
             </div>
             <div class="mb-3">
+              <label for="presentacion" class="form-label">Presentacion</label>
+              <input type="number" class="form-control" id="presentacion" name="presentacion" required>
+            </div>  
+            <div class="mb-3">
               <label for="costo" class="form-label">Costo</label>
               <input type="number" class="form-control" id="costo" name="costo" required>
             </div>           
@@ -75,15 +80,21 @@
         var nombre = document.getElementById('nombre');
         if(nombre.value == ""){ alert("Ingresa Nombre"); return;  }
         var costo = document.getElementById('costo');
-        if(costo.value == ""){ alert("Ingresa costo"); return;  }       
+        if(costo.value == ""){ alert("Ingresa costo"); return;  }    
+        var presentacion = document.getElementById('presentacion');
+        if(presentacion.value == ""){ alert("Ingresa presentacion"); return;  }   
+
         if(unidadMedida == "0"){ alert("Selecciona Unidad Medida"); return;  }  
         var idIngrediente = document.getElementById('idIngrediente').value;
-        if(idIngrediente == "") formulario.submit()  
-        else{
+        if(idIngrediente == "") {
+          $('#nuevoIngredienteModal').modal('hide');
+          formulario.submit()  
+        }else{
             axios.put('./ingrediente_editar', {
               idUnidad:unidadMedida,
               nombre:nombre.value,
               costo:costo.value,
+              presentacion:presentacion.value,
               idIngrediente
             })
             .then(function (response) {
@@ -92,6 +103,7 @@
                   document.getElementById("idunidad_"+idIngrediente).value = unidadMedida;
                   document.getElementById("nombre_"+idIngrediente).value = nombre.value;
                   document.getElementById("costo_"+idIngrediente).value = costo.value;
+                  document.getElementById("presentacion_"+idIngrediente).value = presentacion.value;
 
                   let select = document.getElementById("unidadMedida");
                   let opcion = Array.from(select.options).find(opt => opt.value === unidadMedida);
@@ -100,6 +112,7 @@
                   document.getElementById("unidadVisible_"+idIngrediente).innerHTML = "Unidad de medida: "+unidadVisible;
                   document.getElementById("nombreVisible_"+idIngrediente).innerHTML = nombre.value;
                   document.getElementById("costoVisible_"+idIngrediente).innerHTML = "Costo: "+costo.value;
+                  document.getElementById("presentacionVisible_"+idIngrediente).innerHTML = "Presentacion: "+presentacion.value;
 
                 }else {
                   alert("Error al Insertar Ingrediente - Consultar a Mario")
@@ -114,6 +127,7 @@
       document.getElementById("area_select").innerHTML = ""
       document.getElementById("nombre").value = ""
       document.getElementById("costo").value = ""
+      document.getElementById("presentacion").value = ""
       document.getElementById("idIngrediente").value = ""
 
       $('#nuevoIngredienteModal').modal('show');
@@ -144,9 +158,11 @@
       let idUnidad = document.getElementById("idunidad_"+idIngrediente).value;
       let nombre = document.getElementById("nombre_"+idIngrediente).value;
       let costo = document.getElementById("costo_"+idIngrediente).value;
+      let presentacion = document.getElementById("presentacion_"+idIngrediente).value;
 
       document.getElementById("nombre").value = nombre
       document.getElementById("costo").value = costo
+      document.getElementById("presentacion").value = presentacion
       document.getElementById("idIngrediente").value = idIngrediente
 
       document.getElementById("area_select").innerHTML = ""
