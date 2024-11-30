@@ -166,7 +166,7 @@
           presentacion,
           unidad:datosUnidad.nombre,
           costoUnidadMinima,
-          cantidadTotal: cantidadxreceta,
+          cantidadTotal: (cantidadxreceta * cantidad_platos_requerido) / cantidad_platos,
           totalAcumulado: (costoUsoIngrediente * cantidad_platos_requerido) / cantidad_platos
         }
       }    
