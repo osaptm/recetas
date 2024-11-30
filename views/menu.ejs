@@ -52,6 +52,10 @@
                 <% }) %>
               </select>    
             </div>
+            <div class="mb-3">
+              <label for="cantidad_platos" class="form-label">Cantidad de Platos</label>
+              <input type="number" class="form-control" id="cantidad_platos" name="cantidad_platos" required>
+            </div>         
             <button type="button" onclick="validar()" class="btn btn-primary">Guardar</button>
 
         </div>      
@@ -70,6 +74,7 @@
   let totalGastoProduccion = 0
 
   function nuevaReceta(){
+    document.getElementById('cantidad_platos').value = "20";
     $('#nuevaRecetaModal').modal('show');
   }
 
@@ -77,15 +82,17 @@
     let select = document.getElementById('idReceta');
     let idReceta = select.options[select.selectedIndex].value;
     if(idReceta=="0") {alert("Selecciona Receta"); return;}
+    let cantidad_platos = document.getElementById('cantidad_platos').value;
 
     axios.post('./menu_agregar_receta', {
-      idReceta: idReceta
+      idReceta: idReceta,
+      cantidad_platos
       })
       .then(function (response) {
           if(response.data.mensaje == "OK"){
             let dataReceta = response.data.receta[0]
-            crear_card_receta(dataReceta, dataReceta.nombre, dataReceta.cantidad_platos)
-            calcular_costeoPlato_acumuladoIngredientes(dataReceta._id, dataReceta.cantidad_platos, dataReceta.array_ingredientes)            
+            crear_card_receta(dataReceta, dataReceta.nombre, dataReceta.cantidad_platos, response.data.cantidad_platos_requerido)
+            calcular_costeoPlato_acumuladoIngredientes(dataReceta._id, dataReceta.cantidad_platos, dataReceta.array_ingredientes, response.data.cantidad_platos_requerido)            
           }else {
             alert("Error al Insertar Ingrediente - Consultar a Mario 1")
           }
@@ -95,7 +102,7 @@
       });    
   }
 
-  function crear_card_receta(dataReceta, nombre, cantidad_platos){
+  function crear_card_receta(dataReceta, nombre, cantidad_platos, cantidad_platos_requerido){
     let idReceta = dataReceta._id
     recetas_agragadas[idReceta] = dataReceta
 
@@ -110,7 +117,7 @@
 
     let cantidadPlatos = document.createElement('div');
     cantidadPlatos.id = 'cantidadPlatos_'+idReceta;
-    cantidadPlatos.textContent = 'CANTIDAD PLATOS: '+cantidad_platos;
+    cantidadPlatos.textContent = 'CANTIDAD PLATOS: '+cantidad_platos_requerido;
     card.appendChild(cantidadPlatos);
 
     let costoProduccion = document.createElement('div');
@@ -128,9 +135,11 @@
 
   }
 
-  function calcular_costeoPlato_acumuladoIngredientes(idReceta, cantidad_platos, array_ingredientes){
+  function calcular_costeoPlato_acumuladoIngredientes(idReceta, cantidad_platos, array_ingredientes, cantidad_platos_requerido){
     let costo_total_ingredientes = 0;
+
     array_ingredientes.forEach(ingre => {
+
       let datosingre = ingre.datos_ingrediente[0]
       let datosUnidad = ingre.datos_ingrediente[0].datos_unidad[0]
       let cantidadxreceta = ingre.cantidadxreceta;
@@ -142,8 +151,10 @@
       let costoUnidadMinima = (parseFloat(costo) / parseFloat(presentacion))
       let costoUsoIngrediente =  costoUnidadMinima * parseFloat(cantidadxreceta)
 
-      costo_total_ingredientes += costoUsoIngrediente
-      totalGastoProduccion += costoUsoIngrediente
+      let costoUsoIngrediente_otroCantidadPlatos = (costoUsoIngrediente * cantidad_platos_requerido) / cantidad_platos
+
+      costo_total_ingredientes += costoUsoIngrediente_otroCantidadPlatos
+      totalGastoProduccion += costoUsoIngrediente_otroCantidadPlatos
 
       if (consolidado_ingredientes.hasOwnProperty(idIngre)) {
         consolidado_ingredientes[idIngre].totalAcumulado += costoUsoIngrediente;
@@ -156,13 +167,17 @@
           unidad:datosUnidad.nombre,
           costoUnidadMinima,
           cantidadTotal: cantidadxreceta,
-          totalAcumulado: costoUsoIngrediente
+          totalAcumulado: (costoUsoIngrediente * cantidad_platos_requerido) / cantidad_platos
         }
-      }      
+      }    
+
     });
 
+    
+  
+
     document.getElementById('costoProduccion_'+idReceta).innerHTML = 'COSTO PRODUCCION:'+costo_total_ingredientes;
-    document.getElementById('costoXPlato_'+idReceta).innerHTML = 'PRECIO POR PLATO:'+ parseFloat( costo_total_ingredientes / parseFloat(cantidad_platos));
+    document.getElementById('costoXPlato_'+idReceta).innerHTML = 'PRECIO POR PLATO:'+ parseFloat( costo_total_ingredientes / parseFloat(cantidad_platos_requerido));
     imprime_consolidado_ingredientes()
   }
 

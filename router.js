@@ -73,6 +73,22 @@ router.post('/recetas', async (req, res) => {
   res.redirect('/recetas');
 });
 
+router.post('/getReceta', async (req, res) => {
+  const {idReceta} = req.body;  
+  const receta = await Receta.findById(idReceta);
+  res.send({mensaje:"OK", nombre: receta.nombre, cantidad_platos:receta.cantidad_platos});
+});
+
+router.post('/recetas_editar', async (req, res) => {
+  const {nombre, cantidad_platos, idReceta} = req.body;
+  try {
+    const resultado = await Receta.findByIdAndUpdate(idReceta, { nombre, cantidad_platos}, { new: true });
+  } catch (error) {
+    console.log(error)
+  }
+  res.redirect('/recetas');
+});
+
 router.post('/receta_add_ingrediente', async (req, res) => {
   const { cantidadxreceta, idReceta, idIngrediente } = req.body;  
   const nuevaDetalle= new Detalle({ cantidadxreceta, ingrediente:idIngrediente, receta:idReceta });
@@ -148,8 +164,8 @@ router.get('/menu', async (req, res) => {
 });
 
 router.post('/menu_agregar_receta', async (req, res) => {
-  let {idReceta} = req.body
-  console.log(idReceta)
+  let {idReceta, cantidad_platos} = req.body
+
   const receta = await Receta.aggregate([
     {
       $match:{
@@ -183,8 +199,8 @@ router.post('/menu_agregar_receta', async (req, res) => {
       },           
     }
   ]);
-  console.log(receta)
-  res.send({ mensaje:"OK", receta});
+
+  res.send({ mensaje:"OK", receta, cantidad_platos_requerido: cantidad_platos});
 });
 /**************************************************/
 /**************************************************/
