@@ -70,7 +70,6 @@
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script>
   let consolidado_ingredientes = {}   
-  let recetas_agragadas = {} 
   let totalGastoProduccion = 0
 
   function nuevaReceta(){
@@ -91,20 +90,48 @@
       .then(function (response) {
           if(response.data.mensaje == "OK"){
             let dataReceta = response.data.receta[0]
-            crear_card_receta(dataReceta, dataReceta.nombre, dataReceta.cantidad_platos, response.data.cantidad_platos_requerido)
-            calcular_costeoPlato_acumuladoIngredientes(dataReceta._id, dataReceta.cantidad_platos, dataReceta.array_ingredientes, response.data.cantidad_platos_requerido)            
+
+            let itemMenu = {
+              dataReceta,
+              cantidad_platos_requerido: response.data.cantidad_platos_requerido
+            }
+
+            const storageGuardado = localStorage.getItem('menu');
+
+            if (storageGuardado) {
+
+              let menuObjeto = JSON.parse(storageGuardado);
+                if (menuObjeto.hasOwnProperty(dataReceta._id)) {
+                  alert("Plato repetido")
+                 return
+                } else {
+                  menuObjeto[dataReceta._id] = itemMenu
+                  localStorage.setItem('menu', JSON.stringify(menuObjeto));
+                }
+              
+            } else {
+              let menu = {}
+              menu[dataReceta._id] = itemMenu
+              localStorage.setItem('menu', JSON.stringify(menu));
+            }
+
+
+            crear_card_receta(dataReceta, response.data.cantidad_platos_requerido)
+            calcular_costeoPlato_acumuladoIngredientes(dataReceta, response.data.cantidad_platos_requerido) 
+
           }else {
             alert("Error al Insertar Ingrediente - Consultar a Mario 1")
           }
       })
       .catch(function (error) {
-         alert("Error al Insertar Ingrediente - Consultar a Mario 2")
+         alert("Error al Insertar Ingrediente - Consultar a Mario 2" + error)
       });    
   }
 
-  function crear_card_receta(dataReceta, nombre, cantidad_platos, cantidad_platos_requerido){
+  function crear_card_receta(dataReceta, cantidad_platos_requerido){
     let idReceta = dataReceta._id
-    recetas_agragadas[idReceta] = dataReceta
+    let nombre = dataReceta.nombre
+    let cantidad_platos = dataReceta.cantidad_platos
 
     let card = document.createElement('div');
     card.className = 'mycard';
@@ -130,13 +157,25 @@
     costoXPlato.textContent = 'PRECIO POR PLATO:';
     card.appendChild(costoXPlato);
 
+    let miBoton = document.createElement('button');
+    miBoton.id = 'boton_' + idReceta; // Asumiendo que idReceta está definido
+    miBoton.className = 'btn btn-secondary btn-sm'; // Agrega ambas clases
+    miBoton.textContent = 'Quitar'; // Texto que aparecerá en el botón
+    miBoton.onclick = function() { eliminarReceta(idReceta); }; // Asigna la función al evento click
+    card.appendChild(miBoton); // Agrega el botón al elemento card
+
     let element = document.getElementById('continerCards');
     element.appendChild(card);
 
   }
 
-  function calcular_costeoPlato_acumuladoIngredientes(idReceta, cantidad_platos, array_ingredientes, cantidad_platos_requerido){
+  function calcular_costeoPlato_acumuladoIngredientes(dataReceta, cantidad_platos_requerido){
     let costo_total_ingredientes = 0;
+     let idReceta = dataReceta._id
+    let nombre = dataReceta.nombre
+    let cantidad_platos = dataReceta.cantidad_platos
+      let array_ingredientes = dataReceta.array_ingredientes
+    
 
     array_ingredientes.forEach(ingre => {
 
@@ -183,13 +222,43 @@
 
   function imprime_consolidado_ingredientes(){
     let HTML = "";
-    console.log(consolidado_ingredientes)
     for (const key in consolidado_ingredientes) {
       HTML += `<p>${consolidado_ingredientes[key].nombre} - Comprar ${consolidado_ingredientes[key].cantidadTotal} ${consolidado_ingredientes[key].unidad} x 
       S/. ${consolidado_ingredientes[key].totalAcumulado}  Aproximado</p>` 
     }
     document.getElementById('continerIngredientes').innerHTML = HTML;
   }
+
+  function eliminarReceta(idReceta){
+    consolidado_ingredientes = {}
+    document.getElementById('continerIngredientes').innerHTML = ""
+    document.getElementById('continerCards').innerHTML = ""
+    const storageGuardado = localStorage.getItem('menu');
+    let menuObjeto = JSON.parse(storageGuardado);
+    delete menuObjeto[idReceta];
+    localStorage.setItem('menu', JSON.stringify(menuObjeto));
+    recalcularMasPintar(menuObjeto)   
+  }
+
+  function recalcularMasPintar(menuObjeto){
+    consolidado_ingredientes = {}
+     if (menuObjeto) {
+        for (const idReceta in menuObjeto) {
+          if (menuObjeto.hasOwnProperty(idReceta)) {
+            
+            crear_card_receta(menuObjeto[idReceta].dataReceta, menuObjeto[idReceta].cantidad_platos_requerido)
+            calcular_costeoPlato_acumuladoIngredientes(menuObjeto[idReceta].dataReceta, menuObjeto[idReceta].cantidad_platos_requerido)  
+            
+          }
+        }
+    }
+  }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const storageGuardado = localStorage.getItem('menu');
+    let menuObjeto = JSON.parse(storageGuardado);
+    recalcularMasPintar(menuObjeto)   
+});
 
 </script>
 </body>
